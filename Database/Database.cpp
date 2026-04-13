@@ -1,6 +1,9 @@
 #include <iostream>
 #include "db_main.h"
 #include "httplib.h"
+#include "json.hpp" 
+
+using json = nlohmann::json;
 
 int main()
 {

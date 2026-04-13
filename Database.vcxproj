@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Database\db_main.h" />
     <ClInclude Include="Database\httplib.h" />
+    <ClInclude Include="Database\json.hpp" />
     <ClInclude Include="Database\table.h" />
     <ClInclude Include="Database\table_base.h" />
   </ItemGroup>
