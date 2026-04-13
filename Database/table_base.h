@@ -2,4 +2,3 @@
 struct table_base
 {
 };
-
