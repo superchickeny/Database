@@ -9,3 +9,12 @@ QueryType identifyQuery(const std::string& command)
 	if (command == "DELETE") return QueryType::DELETE;
 	return QueryType::UNKNOWN;
 }
+
+const db_main* db_main::get_instance()
+{
+    if (db_main::instance == nullptr)
+    {
+        db_main::instance = new db_main();
+    }
+    return db_main::instance;
+}

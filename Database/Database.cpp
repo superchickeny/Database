@@ -1,6 +1,7 @@
 #include <iostream>
 #include "db_main.h"
 #include "httplib.h"
+#include "table.h"
 #include <sstream>
 #include "json.hpp" 
 
@@ -8,6 +9,11 @@ using json = nlohmann::json;
 
 int main()
 {
+    table<std::string> table{ {"dog"}};
+    auto res = table.insert("da", "dog", "balls");
+    std::cout << res.first << " " << res.second;
+
+  
 	httplib::Server svr;
 
 	svr.Post("/query", [](const httplib::Request& req, httplib::Response& res) {
