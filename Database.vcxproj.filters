@@ -27,6 +27,9 @@
     <ClInclude Include="Database\httplib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Database\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Database\Database.cpp">
