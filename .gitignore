@@ -1,0 +1,32 @@
+# Build output
+Debug/
+Release/
+x64/
+x86/
+Win32/
+
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.aps
+
+# Compiled output
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+
+# NuGet
+packages/
+*.nupkg
+
+# Crash dumps
+*.dmp
