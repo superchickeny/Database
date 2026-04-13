@@ -8,4 +8,3 @@ struct table : public table_base
 
 
 };
-
