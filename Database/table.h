@@ -1,39 +1,25 @@
 #pragma once
-#include "table_base.h"
 #include <unordered_map>
 #include <string>
+#include "row.h"
 
-template<typename T>
-struct table : public table_base
+struct table
 {
-	T primary_key{};
-	
-	std::unordered_map<std::string, std::unordered_map<T, std::string>> data;
+	std::string name;
+	std::unordered_map<std::string, row> data;
+	std::vector<std::string> columns;
 
-	table(std::vector<std::string> column_names)
+	table(const std::string& name, const std::vector<std::string>& column_names)
 	{
+		this->name = name;
 		for (auto& column : column_names)
 		{
-			data.insert(std::pair<std::string, std::unordered_map<T, std::string>>{column, {}});
+			columns.push_back(column);
 		}
 	}
 
-	std::pair<T, std::string> insert(T primary_key, std::string column, std::string value);
+	row& insert(const std::string& primary_key, const std::string& column, const std::string& value);
 };
 
-template<typename T>
-inline std::pair<T, std::string> table<T>::insert(T primary_key, std::string column, std::string value)
-{
 
-	auto it = data.find(column);
-	if (it == data.end())
-	{
-		return {};
-	}
 
-	std::unordered_map<T, std::string>& column_data = it->second;
-	std::pair<T, std::string> insertion_pair{ primary_key, value };
-	column_data.insert(insertion_pair);
-
-	return insertion_pair;
-}

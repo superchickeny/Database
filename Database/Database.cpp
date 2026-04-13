@@ -9,11 +9,19 @@ using json = nlohmann::json;
 
 int main()
 {
-    table<std::string> table{ {"dog"}};
-    auto res = table.insert("da", "dog", "balls");
-    std::cout << res.first << " " << res.second;
+	db_main* db = db_main::get_instance();
+	db->start_data_persistance_thread();
 
+	db->add_table("testing", { "first_name", "last_name"});
+	table* table = db->get_table("testing");
+	table->insert("1", "first_name", "bob");
+	table->insert("2", "first_name", "dog");
+	table->insert("3", "first_name", "shane");
   
+	table->insert("1", "last_name", "goatman");
+	table->insert("2", "last_name", "walrus");
+	table->insert("3", "last_name", "fatass");
+
 	httplib::Server svr;
 
 	svr.Post("/query", [](const httplib::Request& req, httplib::Response& res) {
