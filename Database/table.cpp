@@ -15,3 +15,26 @@ row& table::insert(const std::string& primary_key, const std::string& column, co
 
 	return current_row;
 }
+
+
+std::unordered_map<std::string, row>& table::select_all()
+{
+	return this->data;
+}
+
+/*
+row& table::select(const std::string& column, const std::string& value)
+{
+
+}
+
+std::unordered_map<std::string, row>& table::select_all(const std::string& column)
+{
+	
+}
+
+std::unordered_map<std::string, row>& table::select_all(const std::string& column, const std::string& value)
+{
+	
+}
+*/
