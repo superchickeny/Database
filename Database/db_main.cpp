@@ -12,7 +12,7 @@ QueryType identifyQuery(const std::string& command)
 
 table& db_main::add_table(const std::string& table_name, const std::vector<std::string>& columns)
 {
-	std::lock_guard<std::mutex> lock(mtx);
+	std::unique_lock<std::shared_mutex> lock(mtx);
 	this->table_names.push_back(table_name);
 	auto [it, _] = this->tables.emplace(table_name, table{table_name, columns });
 	return it->second;
@@ -20,12 +20,131 @@ table& db_main::add_table(const std::string& table_name, const std::vector<std::
 
 table* db_main::get_table(const std::string& table_name)
 {
-	std::lock_guard<std::mutex> lock(mtx);
+	std::shared_lock<std::shared_mutex> lock(mtx); 
 	auto it = tables.find(table_name);
 	if (it == tables.end())
 		return nullptr;
 
 	return &it->second;
+}
+
+void db_main::delete_table(const std::string& table_name)
+{
+	std::unique_lock<std::shared_mutex> lock(mtx);
+	this->tables.erase(table_name);
+}
+
+bool db_main::save_data_to_file()
+{
+	json tables = json::array();
+
+	std::shared_lock<std::shared_mutex> lock(this->mtx);
+	for (auto& [table_name, table] : this->tables)
+	{
+		json columns = json::array();
+		columns.push_back("primary_key");
+		for (auto& column : table.columns)
+		{
+			columns.push_back(column);
+		}
+
+		json data = json::array();
+		for (auto& [primary_key, row] : table.data)
+		{
+			json row_json = json::object();
+			row_json["primary_key"] = primary_key;
+			for (auto& [column, value] : row.data)
+			{
+				row_json[column] = value;
+			}
+			data.push_back(row_json);
+		}
+
+		tables.push_back({ 
+			{"table", table_name},
+			{"columns", columns },
+			{"data", data}
+		});
+
+	}
+
+	std::ofstream file("data.json");
+	if (!file.is_open())
+		return false;
+
+	file << tables;
+	return true;
+}
+
+void db_main::load_data_from_file()
+{
+	std::ifstream file("data.json");
+	if (!file.is_open())
+		return;
+
+	json tables_json = json::parse(file);
+
+	for (auto& table_json : tables_json)
+	{
+		std::string table_name = table_json["table"];
+		std::vector<std::string> columns;
+
+		for (auto& column : table_json["columns"])
+		{
+			if(column != "primary_key")
+				columns.push_back(column);
+		}
+
+		this->add_table(table_name, columns);
+	
+		for (auto& row_json : table_json["data"])
+		{
+			std::string primary_key = row_json["primary_key"];
+			for (auto& [column, value] : row_json.items())
+			{
+				if (column == "primary_key") continue;
+				this->get_table(table_name)->insert(primary_key, column, value);
+			}
+		}
+	}
+
+}
+
+void db_main::start_server_thread()
+{
+	std::thread t([this]() {
+
+		httplib::Server svr;
+
+		svr.Post("/query", [this](const httplib::Request& req, httplib::Response& res) {
+			json body;
+			try {
+				body = json::parse(req.body);
+			}
+			catch (...) {
+				res.status = 400;
+				res.set_content("Invalid JSON format", "text/plain");
+				return;
+			}
+			// validate query
+			if (!body.contains("query") || !body["query"].is_string()) {
+				res.status = 400;
+				res.set_content("Missing or invalid 'query' field", "text/plain");
+				return;
+			}
+			std::string q = body["query"];
+			std::istringstream iss(q);
+			std::string command, from, table, star;
+			iss >> command >> star >> from >> table;
+			std::cout << "Identified query type: " << static_cast<int>(identifyQuery(command)) << std::endl;
+			res.set_content("Query received and processed", "text/plain");
+			});
+		std::cout << "Server is running on http://localhost:4000" << std::endl;
+		svr.listen("localhost", 4000);
+
+	});
+
+	t.detach();
 }
 
 void db_main::start_data_persistance_thread()
@@ -34,33 +153,12 @@ void db_main::start_data_persistance_thread()
 		
 		do {
 
-			std::this_thread::sleep_for(std::chrono::seconds(5));
-
-			std::lock_guard<std::mutex> lock(this->mtx);
-			std::cout << "Current tables at saved time: \n\n";
-			for (auto& table_name : this->table_names) 
-			{
-				auto it = this->tables.find(table_name);
-				table& table = it->second;
-				std::cout << "Table name: " << table.name << "\nRow count: " << table.data.size() << "\n";
-				
-				std::vector<row*> rows;
-				for (auto& [primary_key, current_row] : table.data)
-				{
-					rows.push_back(&current_row);
-				}
-
-				for (row* row : rows)
-				{
-					std::cout << "	Primary key: " << row->primary_key << " | ";
-					for (auto& col : table.columns)
-					{
-						std::cout << "	" << col << ": " << row->get_column_value(col) << " |";
-					}
-					std::cout << "\n";
-				}
-				std::cout << "\n";
-			}
+			std::this_thread::sleep_for(std::chrono::seconds(15));
+			
+			if (this->save_data_to_file())
+				std::cout << "Save Complete" << "\n";
+			else
+				std::cout << "Save Failed" << "\n";
 
 		} while (true);
 

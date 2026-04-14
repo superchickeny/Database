@@ -19,6 +19,12 @@ struct table
 	}
 
 	row& insert(const std::string& primary_key, const std::string& column, const std::string& value);
+	row& select(const std::string& column, const std::string& value);
+
+	std::unordered_map<std::string, row>& select_all();
+	std::unordered_map<std::string, row>& select_all(const std::string& column);
+	std::unordered_map<std::string, row>& select_all(const std::string& column, const std::string& value);
+	
 };
 
 
