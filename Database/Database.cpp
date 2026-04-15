@@ -1,7 +1,6 @@
 #include <iostream>
 #include "db_main.h"
 
-
 int main()
 {
 	db_main* db = db_main::get_instance();
@@ -21,7 +20,5 @@ int main()
 			
 		});
 	
-
-
 	for (;;); //prevents exit
 }
