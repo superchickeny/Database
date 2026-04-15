@@ -30,6 +30,21 @@ enum class QueryType
 
 QueryType identifyQuery(const std::string& command);
 
+class db_util {
+public:
+	template<typename Func>
+	static void timed_event(Func timed_function);
+};
+
+template<typename Func>
+void db_util::timed_event(Func timed_function) {
+	auto start = std::chrono::high_resolution_clock::now();
+	timed_function();
+	auto finish = std::chrono::high_resolution_clock::now();
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+	std::cout << ms << "ms\n";
+}
+
 struct db_main
 {
 	
@@ -44,6 +59,7 @@ struct db_main
 
 	bool save_data_to_file();
 	void load_data_from_file();
+	void create_data_file_if_missing();
 	
 	void start_server_thread(); //server runs here
 	void start_data_persistance_thread(); //starts thread that is responsible for saving data to disk on a timer
