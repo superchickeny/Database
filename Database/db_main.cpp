@@ -244,18 +244,13 @@ void db_main::start_server_thread()
 void db_main::start_data_persistance_thread()
 {
 	std::thread t([this]() {
-		
 		do {
-
 			std::this_thread::sleep_for(std::chrono::seconds(15));
-			
 			if (this->save_data_to_file())
 				std::cout << "Save Complete" << "\n";
 			else
 				std::cout << "Save Failed" << "\n";
-
 		} while (true);
-
 	});
 
 	t.detach();
