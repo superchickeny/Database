@@ -1,6 +1,6 @@
 #include "table.h"
 
-row& table::insert(const std::string& primary_key, const std::string& column, const std::string& value)
+row table::insert(const std::string& primary_key, const std::string& column, const std::string& value)
 {
 
 	auto it = data.find(primary_key);

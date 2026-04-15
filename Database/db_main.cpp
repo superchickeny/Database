@@ -41,8 +41,8 @@ bool db_main::save_data_to_file()
 	std::shared_lock<std::shared_mutex> lock(this->mtx);
 	for (auto& [table_name, table] : this->tables)
 	{
+
 		json columns = json::array();
-		columns.push_back("primary_key");
 		for (auto& column : table.columns)
 		{
 			columns.push_back(column);
@@ -52,7 +52,6 @@ bool db_main::save_data_to_file()
 		for (auto& [primary_key, row] : table.data)
 		{
 			json row_json = json::object();
-			row_json["primary_key"] = primary_key;
 			for (auto& [column, value] : row.data)
 			{
 				row_json[column] = value;
@@ -63,7 +62,8 @@ bool db_main::save_data_to_file()
 		tables.push_back({ 
 			{"table", table_name},
 			{"columns", columns },
-			{"data", data}
+			{"data", data},
+			{"primary_column", table.primary_key_column_name}
 		});
 
 	}
@@ -79,19 +79,22 @@ bool db_main::save_data_to_file()
 void db_main::load_data_from_file()
 {
 	std::ifstream file("data.json");
-	if (!file.is_open())
+	if (!file.is_open() || file.peek() == std::ifstream::traits_type::eof())
 		return;
 
 	json tables_json = json::parse(file);
-
+	
 	for (auto& table_json : tables_json)
 	{
 		std::string table_name = table_json["table"];
+		std::string primary_column = table_json["primary_column"];
+
 		std::vector<std::string> columns;
+		columns.push_back(primary_column);
 
 		for (auto& column : table_json["columns"])
 		{
-			if(column != "primary_key")
+			if(column != primary_column)
 				columns.push_back(column);
 		}
 
@@ -99,15 +102,23 @@ void db_main::load_data_from_file()
 	
 		for (auto& row_json : table_json["data"])
 		{
-			std::string primary_key = row_json["primary_key"];
+			std::string primary_key = row_json[primary_column];
 			for (auto& [column, value] : row_json.items())
 			{
-				if (column == "primary_key") continue;
 				this->get_table(table_name)->insert(primary_key, column, value);
 			}
 		}
 	}
 
+}
+
+void db_main::create_data_file_if_missing()
+{
+	std::ifstream check("data.json");
+	if (!check.is_open())
+	{
+		std::ofstream file("data.json");
+	}
 }
 
 void db_main::start_server_thread()
@@ -173,5 +184,10 @@ db_main* db_main::get_instance()
     {
         db_main::instance = new db_main();
     }
+
+	db_main::instance->create_data_file_if_missing();
+	db_main::instance->load_data_from_file();
+	
     return db_main::instance;
 }
+
