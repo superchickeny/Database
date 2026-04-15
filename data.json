@@ -1,1 +1,1 @@
-[{"columns":["userID"],"data":[{"userID":"1"}],"primary_column":"userID","table":"users"}]
+[{"columns":["userID"],"data":[{"userID":"1"}],"primary_column":"userID","table":"users"},{"columns":["id","name","price"],"data":[],"primary_column":"id","table":"products"}]
