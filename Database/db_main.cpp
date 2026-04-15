@@ -136,8 +136,15 @@ void db_main::start_server_thread()
 				return;
 			}
 			std::string q = body["query"];
-			auto result = queryParse::parse_query(q); 
-			std::cout << "Query received: " << q << std::endl;
+			auto result = queryParse::parse_query(q);
+
+			std::cout << "Query: " << q << std::endl;
+			std::cout << "Type: " << static_cast<int>(result.type) << std::endl;
+			std::cout << "Table: " << result.table << std::endl;
+			for (auto& col : result.columns) std::cout << "Col: " << col << std::endl;
+			for (auto& val : result.values) std::cout << "Val: " << val << std::endl;
+			if (result.where) std::cout << "Where: " << result.where->first << " = " << result.where->second << std::endl;
+			std::cout << "---" << std::endl;
 			res.set_content("Query received and processed", "text/plain");
 			});
 		std::cout << "Server is running on http://localhost:4000" << std::endl;

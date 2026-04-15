@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Database\table_base.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Database\table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -28,6 +25,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Database\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\row.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\query.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,7 +44,10 @@
     <ClCompile Include="Database\table.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Database\table_base.cpp">
+    <ClCompile Include="Database\row.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Database\query.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

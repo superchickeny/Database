@@ -3,6 +3,8 @@
 #include <vector>
 #include <optional>
 
+#undef DELETE;
+
 struct queryParse {
 
 	enum class QueryType
