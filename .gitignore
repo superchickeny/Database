@@ -1,32 +1,22 @@
-# Build output
+# Visual Studio
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+.vs/
 Debug/
 Release/
 x64/
 x86/
-Win32/
 
-# Visual Studio files
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.vcxproj.user
-*.aps
-
-# Compiled output
+# Build output
 *.obj
-*.pch
+*.exe
 *.pdb
 *.ilk
-*.exp
-*.lib
-*.dll
-*.exe
+*.log
+*.idb
+*.tlog
 
-# NuGet
-packages/
-*.nupkg
-
-# Crash dumps
-*.dmp
+# Database file
+data.json
