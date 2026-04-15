@@ -125,6 +125,16 @@ void db_main::start_server_thread()
     std::thread t([this]() {
 
         httplib::Server svr;
+		// Set CORS headers to allow cross-origin requests from any domain, enabling the server to be accessed by clients hosted on different origins
+        svr.set_default_headers({
+            {"Access-Control-Allow-Origin", "*"},
+            {"Access-Control-Allow-Methods", "POST, OPTIONS"},
+            {"Access-Control-Allow-Headers", "Content-Type"}
+        });
+
+        svr.Options("/query", [](const httplib::Request&, httplib::Response& res) {
+            res.status = 204;
+            });
 		// Define the POST /query endpoint to handle incoming SQL-like queries
         svr.Post("/query", [this](const httplib::Request& req, httplib::Response& res) {
             json body;
