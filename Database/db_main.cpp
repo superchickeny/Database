@@ -1,14 +1,6 @@
 #include "db_main.h"
 #include <sstream>	
-
-QueryType identifyQuery(const std::string& command)
-{
-	if (command == "SELECT") return QueryType::SELECT;
-	if (command == "INSERT") return QueryType::INSERT;
-	if (command == "UPDATE") return QueryType::UPDATE;
-	if (command == "DELETE") return QueryType::DELETE;
-	return QueryType::UNKNOWN;
-}
+#include "query.h"
 
 table& db_main::add_table(const std::string& table_name, const std::vector<std::string>& columns)
 {
@@ -144,10 +136,8 @@ void db_main::start_server_thread()
 				return;
 			}
 			std::string q = body["query"];
-			std::istringstream iss(q);
-			std::string command, from, table, star;
-			iss >> command >> star >> from >> table;
-			std::cout << "Identified query type: " << static_cast<int>(identifyQuery(command)) << std::endl;
+			auto result = queryParse::parse_query(q); 
+			std::cout << "Query received: " << q << std::endl;
 			res.set_content("Query received and processed", "text/plain");
 			});
 		std::cout << "Server is running on http://localhost:4000" << std::endl;
@@ -190,4 +180,3 @@ db_main* db_main::get_instance()
 	
     return db_main::instance;
 }
-

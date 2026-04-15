@@ -10,25 +10,9 @@
 #include "json.hpp"
 #include <fstream>
 #include "httplib.h"
-#include "table.h"
 #include <sstream>
-#include "json.hpp" 
 
 using json = nlohmann::json;
-
-//some random library was conflicting
-#undef DELETE
-
-enum class QueryType
-{
-	SELECT,
-	INSERT,
-	UPDATE,
-	DELETE,
-	UNKNOWN
-};
-
-QueryType identifyQuery(const std::string& command);
 
 class db_util {
 public:
