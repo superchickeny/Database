@@ -2,6 +2,7 @@
 #include <sstream>	
 #include "query.h"
 
+// Adds a new table to the in-memory database with the specified name and columns, ensuring thread safety with a unique lock on the shared mutex
 table& db_main::add_table(const std::string& table_name, const std::vector<std::string>& columns)
 {
 	std::unique_lock<std::shared_mutex> lock(mtx);
@@ -10,6 +11,7 @@ table& db_main::add_table(const std::string& table_name, const std::vector<std::
 	return it->second;
 }
 
+// Retrieves a pointer to a table by name from the in-memory database, using a shared lock on the mutex to allow concurrent reads while ensuring thread safety
 table* db_main::get_table(const std::string& table_name)
 {
 	std::shared_lock<std::shared_mutex> lock(mtx); 
@@ -20,12 +22,14 @@ table* db_main::get_table(const std::string& table_name)
 	return &it->second;
 }
 
+// Deletes a table from the in-memory database by name, ensuring thread safety with a unique lock on the shared mutex
 void db_main::delete_table(const std::string& table_name)
 {
 	std::unique_lock<std::shared_mutex> lock(mtx);
 	this->tables.erase(table_name);
 }
 
+// Serializes the in-memory database state to a JSON file, including all tables, their columns, and data, to ensure persistence across server restarts
 bool db_main::save_data_to_file()
 {
 	json tables = json::array();
@@ -68,6 +72,7 @@ bool db_main::save_data_to_file()
 	return true;
 }
 
+// Loads the database state from a JSON file, reconstructing tables and their data into memory for use by the server
 void db_main::load_data_from_file()
 {
 	std::ifstream file("data.json");
@@ -104,6 +109,7 @@ void db_main::load_data_from_file()
 
 }
 
+// Checks if the data file exists, and if not, creates an empty file to ensure the database can persist data
 void db_main::create_data_file_if_missing()
 {
 	std::ifstream check("data.json");
@@ -113,48 +119,118 @@ void db_main::create_data_file_if_missing()
 	}
 }
 
+// Starts the HTTP server in a separate thread, handling incoming queries and responding with JSON results
 void db_main::start_server_thread()
 {
-	std::thread t([this]() {
+    std::thread t([this]() {
 
-		httplib::Server svr;
+        httplib::Server svr;
+		// Define the POST /query endpoint to handle incoming SQL-like queries
+        svr.Post("/query", [this](const httplib::Request& req, httplib::Response& res) {
+            json body;
+            try {
+                body = json::parse(req.body);
+            }
+            catch (...) {
+                res.status = 400;
+                res.set_content("Invalid JSON format", "text/plain");
+                return;
+            }
+            if (!body.contains("query") || !body["query"].is_string()) {
+                res.status = 400;
+                res.set_content("Missing or invalid 'query' field", "text/plain");
+                return;
+            }
 
-		svr.Post("/query", [this](const httplib::Request& req, httplib::Response& res) {
-			json body;
-			try {
-				body = json::parse(req.body);
-			}
-			catch (...) {
-				res.status = 400;
-				res.set_content("Invalid JSON format", "text/plain");
-				return;
-			}
-			// validate query
-			if (!body.contains("query") || !body["query"].is_string()) {
-				res.status = 400;
-				res.set_content("Missing or invalid 'query' field", "text/plain");
-				return;
-			}
-			std::string q = body["query"];
-			auto result = queryParse::parse_query(q);
+            std::string q = body["query"];
+            auto result = queryParse::parse_query(q);
+            json response;
 
-			std::cout << "Query: " << q << std::endl;
-			std::cout << "Type: " << static_cast<int>(result.type) << std::endl;
-			std::cout << "Table: " << result.table << std::endl;
-			for (auto& col : result.columns) std::cout << "Col: " << col << std::endl;
-			for (auto& val : result.values) std::cout << "Val: " << val << std::endl;
-			if (result.where) std::cout << "Where: " << result.where->first << " = " << result.where->second << std::endl;
-			std::cout << "---" << std::endl;
-			res.set_content("Query received and processed", "text/plain");
-			});
-		std::cout << "Server is running on http://localhost:4000" << std::endl;
-		svr.listen("localhost", 4000);
+            switch (result.type) {
+            case queryParse::QueryType::CREATE: {
+                this->add_table(result.table, result.columns);
+                response = { {"status", "ok"}, {"created", result.table} };
+                break;
+            }
+            // For INSERT, we assume the first column is the primary key and the first value is the primary key value
+            case queryParse::QueryType::INSERT: {
+                table* t = this->get_table(result.table);
+                if (!t) { res.status = 404; res.set_content("Table not found", "text/plain"); return; }
+                const std::string& pk = result.values[0];
+                for (size_t i = 0; i < result.columns.size(); i++) {
+                    t->insert(pk, result.columns[i], result.values[i]);
+                }
+                response = { {"status", "ok"}, {"inserted", pk} };
+                break;
+            }
+		    // For SELECT, we return all rows that match the optional WHERE clause
+            case queryParse::QueryType::SELECT: {
+                table* t = this->get_table(result.table);
+                if (!t) { res.status = 404; res.set_content("Table not found", "text/plain"); return; }
+                json rows = json::array();
+                for (auto& [pk, row] : t->select_all()) {
+                    if (result.where) {
+                        auto it = row.data.find(result.where->first);
+                        if (it == row.data.end() || it->second != result.where->second) continue;
+                    }
+                    json r;
+                    for (auto& [col, val] : row.data) r[col] = val;
+                    rows.push_back(r);
+                }
+                response = { {"status", "ok"}, {"rows", rows} };
+                break;
+            }
+			// For UPDATE, we update all rows that match the optional WHERE clause with the new column values
+            case queryParse::QueryType::UPDATE: {
+                table* t = this->get_table(result.table);
+                if (!t) { res.status = 404; res.set_content("Table not found", "text/plain"); return; }
+                int updated = 0;
+                for (auto& [pk, row] : t->select_all()) {
+                    if (result.where) {
+                        auto it = row.data.find(result.where->first);
+                        if (it == row.data.end() || it->second != result.where->second) continue;
+                    }
+                    row.add_column_value(result.columns[0], result.values[0]);
+                    updated++;
+                }
+                response = { {"status", "ok"}, {"updated", updated} };
+                break;
+            }
+			// For DELETE, we delete all rows that match the optional WHERE clause
+            case queryParse::QueryType::DELETE: {
+                table* t = this->get_table(result.table);
+                if (!t) { res.status = 404; res.set_content("Table not found", "text/plain"); return; }
+                int deleted = 0;
+                for (auto it = t->data.begin(); it != t->data.end(); ) {
+                    bool match = true;
+                    if (result.where) {
+                        auto col_it = it->second.data.find(result.where->first);
+                        match = (col_it != it->second.data.end() && col_it->second == result.where->second);
+                    }
+                    if (match) { it = t->data.erase(it); deleted++; }
+                    else ++it;
+                }
+                response = { {"status", "ok"}, {"deleted", deleted} };
+                break;
+            }
+			// For unknown query types, we return a 400 Bad Request error
+            default: {
+                res.status = 400;
+                res.set_content("Unknown query type", "text/plain");
+                return;
+            }
+            }
 
-	});
+            res.set_content(response.dump(2), "application/json");
+            });
 
-	t.detach();
+        std::cout << "Server is running on http://localhost:4000" << std::endl;
+        svr.listen("localhost", 4000);
+        });
+    t.detach();
 }
 
+// Starts a background thread that periodically saves the in-memory database state to a file every 15 seconds
 void db_main::start_data_persistance_thread()
 {
 	std::thread t([this]() {
@@ -175,6 +251,7 @@ void db_main::start_data_persistance_thread()
 	t.detach();
 }
 
+// Singleton pattern implementation to ensure only one instance of db_main exists, and it loads data from file on first access
 db_main* db_main::get_instance()
 {
     if (db_main::instance == nullptr)

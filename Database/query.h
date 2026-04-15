@@ -3,7 +3,7 @@
 #include <vector>
 #include <optional>
 
-#undef DELETE;
+#undef DELETE
 
 struct queryParse {
 
