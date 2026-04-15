@@ -22,16 +22,16 @@
     <ClInclude Include="Database\db_main.h" />
     <ClInclude Include="Database\httplib.h" />
     <ClInclude Include="Database\json.hpp" />
+    <ClInclude Include="Database\query.h" />
     <ClInclude Include="Database\row.h" />
     <ClInclude Include="Database\table.h" />
-    <ClInclude Include="query.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Database\Database.cpp" />
     <ClCompile Include="Database\db_main.cpp" />
+    <ClCompile Include="Database\query.cpp" />
     <ClCompile Include="Database\row.cpp" />
     <ClCompile Include="Database\table.cpp" />
-    <ClCompile Include="query.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
