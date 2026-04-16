@@ -15,10 +15,8 @@ int main()
 	}
 
 	db_util::timed_event([users]() {
-
-			users->insert("1", "userID", "1");
-			
-		});
+			users->insert("1", "userID", "1");		
+	});
 	
 	for (;;); //prevents exit
 }

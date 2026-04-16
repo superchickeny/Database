@@ -141,6 +141,7 @@ void db_main::start_server_thread()
             try {
                 body = json::parse(req.body);
             }
+
             catch (...) {
                 res.status = 400;
                 res.set_content("Invalid JSON format", "text/plain");
