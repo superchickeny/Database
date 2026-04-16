@@ -9,10 +9,6 @@ int main()
 
 	db->add_table("users", {"userID", "retard", "taco", "burrito"});
 	table* users = db->get_table("users");
-	for (auto& [key, row] : users->select_all())
-	{
-		std::cout << key << "\n";
-	}
 
 	db_util::timed_event([users]() {
 			for (int i = 0; i < 2000; i++)
