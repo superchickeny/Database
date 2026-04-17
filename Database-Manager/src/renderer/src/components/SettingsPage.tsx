@@ -42,7 +42,12 @@ function SettingsRow({ label, desc, control }: { label: string; desc?: string; c
   )
 }
 
-function SettingsPage() {
+type SettingsPageProps = {
+    url: string
+    setUrl: React.Dispatch<React.SetStateAction<string>>
+};
+
+function SettingsPage({url, setUrl}: SettingsPageProps) {
   const [autoRun, setAutoRun] = useState(true)
   const [showRowNums, setShowRowNums] = useState(true)
   const [highlightNull, setHighlightNull] = useState(true)
@@ -86,7 +91,7 @@ function SettingsPage() {
       <div style={{ marginBottom: 32 }}>
         <div style={sectionTitleStyle}>Connection</div>
         <SettingsRow label="Server URL" desc="The backend query endpoint"
-          control={<input style={inputStyle} defaultValue="http://localhost:4000/query" />}
+          control={<input style={inputStyle} value={url} onChange={(e) => setUrl(e.currentTarget.value)}/>}
         />
         <SettingsRow label="Status" desc="Current connection state"
           control={
@@ -99,42 +104,6 @@ function SettingsPage() {
         <SettingsRow label="Reconnect" desc="Test and re-establish the connection"
           control={<button style={btnStyle}>Test connection</button>}
         />
-      </div>
-
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionTitleStyle}>Editor</div>
-        <SettingsRow label="Row limit" desc="Maximum rows returned per query"
-          control={<select style={selectStyle}><option>100</option><option>500</option><option>1000</option><option>5000</option><option>Unlimited</option></select>}
-        />
-        <SettingsRow label="Query timeout" desc="Cancel queries exceeding this duration"
-          control={<select style={selectStyle}><option>5s</option><option>30s</option><option>60s</option><option>None</option></select>}
-        />
-        <SettingsRow label="Font size" desc="Results table and editor font size"
-          control={<select style={selectStyle}><option>11px</option><option>12px</option><option>13px</option><option>14px</option></select>}
-        />
-        <SettingsRow label="Auto-run on ↵" desc="Execute query when Enter is pressed"
-          control={<Toggle checked={autoRun} onChange={setAutoRun} />}
-        />
-      </div>
-
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionTitleStyle}>Display</div>
-        <SettingsRow label="Show row numbers" desc="Display row index in results"
-          control={<Toggle checked={showRowNums} onChange={setShowRowNums} />}
-        />
-        <SettingsRow label="Highlight null values" desc="Show null cells in muted italic style"
-          control={<Toggle checked={highlightNull} onChange={setHighlightNull} />}
-        />
-        <SettingsRow label="Query history limit" desc="Number of past queries to retain"
-          control={<select style={selectStyle}><option>10</option><option>20</option><option>50</option><option>100</option></select>}
-        />
-      </div>
-
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionTitleStyle}>Keyboard shortcuts</div>
-        <SettingsRow label="Run query" control={<span style={kbdStyle}>↵</span>} />
-        <SettingsRow label="Previous query" control={<span style={kbdStyle}>↑</span>} />
-        <SettingsRow label="Next query" control={<span style={kbdStyle}>↓</span>} />
       </div>
     </div>
   )
