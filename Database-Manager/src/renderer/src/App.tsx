@@ -86,7 +86,7 @@ export default function App(): React.JSX.Element {
 
         {/* Pages */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {tab === 'home' && <HomePage onRunQuery={handleRunQuery} queries={queries} setQueries={setQueries} />}
+          {tab === 'home' && <HomePage onRunQuery={handleRunQuery} queries={queries} />}
           {tab === 'query' && <QueryPage url={url} initialQuery={pendingQuery} onQueryRan={OnQuerySent} />}
           {tab === 'settings' && <SettingsPage url={url} setUrl={setUrl}/>}
         </div>

@@ -1,109 +1,209 @@
-import { useState } from "react";
+import { useState } from "react"
+import { SANS, MONO, c, r } from './theme'
 
-const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" }
-const SANS: React.CSSProperties = { fontFamily: "'DM Sans', sans-serif" }
+/* --- controls --------------------------------------------------------- */
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="relative inline-block cursor-pointer" style={{ width: 38, height: 22 }}>
+    <label className="relative inline-block cursor-pointer" style={{ width: 34, height: 20 }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="hidden" />
       <span
-        className="block rounded-full border transition-colors duration-200"
+        className="block rounded-full transition-colors duration-200"
         style={{
-          width: 38, height: 22,
-          background: checked ? '#2dd4bf' : '#26262f',
-          borderColor: checked ? '#2dd4bf' : 'rgba(255,255,255,0.07)',
+          width: 34, height: 20,
+          background: checked ? c.accent : 'rgba(255,255,255,0.08)',
+          border: `1px solid ${checked ? c.accent : c.border}`,
+          boxShadow: checked ? `0 0 0 3px ${c.accentDim}` : 'none',
+          transition: 'all 200ms',
         }}
       />
       <span
         className="absolute rounded-full pointer-events-none transition-all duration-200"
         style={{
-          top: 3, left: 3, width: 16, height: 16,
-          background: checked ? '#0c0c0e' : '#50505f',
-          transform: checked ? 'translateX(16px)' : 'translateX(0)',
+          top: 3, left: 3, width: 14, height: 14,
+          background: checked ? c.bg : c.textDim,
+          transform: checked ? 'translateX(14px)' : 'translateX(0)',
         }}
       />
     </label>
   )
 }
 
-function SettingsRow({ label, desc, control }: { label: string; desc?: string; control: React.ReactNode }) {
+function SettingsRow({
+  label,
+  desc,
+  control,
+  last,
+}: {
+  label: string
+  desc?: string
+  control: React.ReactNode
+  last?: boolean
+}) {
   return (
     <div
-      className="flex items-center justify-between"
-      style={{ padding: '13px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+      className="flex items-start justify-between gap-6"
+      style={{
+        padding: '16px 0',
+        borderBottom: last ? 'none' : `1px solid ${c.border}`,
+      }}
     >
-      <div>
-        <div style={{ fontSize: 13, color: '#e8e8ec', marginBottom: 2, ...SANS }}>{label}</div>
-        {desc && <div style={{ fontSize: 11, color: '#50505f', ...SANS }}>{desc}</div>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ ...SANS, fontSize: 13, color: c.text, fontWeight: 500, marginBottom: 3 }}>
+          {label}
+        </div>
+        {desc && (
+          <div style={{ ...SANS, fontSize: 12, color: c.textDim, lineHeight: 1.5 }}>
+            {desc}
+          </div>
+        )}
       </div>
-      <div className="shrink-0 ml-6">{control}</div>
+      <div className="shrink-0" style={{ paddingTop: 2 }}>{control}</div>
     </div>
   )
 }
 
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
+        <div style={{
+          ...SANS, fontSize: 10.5, color: c.textFaint,
+          letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 500,
+          marginBottom: description ? 4 : 0,
+        }}>
+          {title}
+        </div>
+        {description && (
+          <div style={{ ...SANS, fontSize: 12, color: c.textDim, marginTop: 4 }}>
+            {description}
+          </div>
+        )}
+      </div>
+      <div>{children}</div>
+    </section>
+  )
+}
+
+/* --- page ------------------------------------------------------------- */
+
 type SettingsPageProps = {
-    url: string
-    setUrl: React.Dispatch<React.SetStateAction<string>>
-};
+  url: string
+  setUrl: React.Dispatch<React.SetStateAction<string>>
+}
 
-function SettingsPage({url, setUrl}: SettingsPageProps) {
-  const [autoRun, setAutoRun] = useState(true)
-  const [showRowNums, setShowRowNums] = useState(true)
-  const [highlightNull, setHighlightNull] = useState(true)
-
-  const selectStyle: React.CSSProperties = {
-    background: '#18181d', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 7,
-    color: '#e8e8ec', ...SANS, fontSize: 12,
-    padding: '7px 28px 7px 10px', cursor: 'pointer', outline: 'none', minWidth: 120,
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 10px center',
-  }
+function SettingsPage({ url, setUrl }: SettingsPageProps) {
+  const [inputFocused, setInputFocused] = useState(false)
 
   const inputStyle: React.CSSProperties = {
-    background: '#18181d', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 7,
-    color: '#e8e8ec', ...MONO, fontSize: 12,
-    padding: '7px 12px', outline: 'none', width: 220,
+    background: c.surface,
+    border: `1px solid ${inputFocused ? c.accentSoft : c.border}`,
+    borderRadius: r.sm,
+    color: c.text,
+    ...MONO, fontSize: 12,
+    padding: '7px 11px',
+    outline: 'none',
+    width: 260,
+    transition: 'border-color 150ms',
+    boxShadow: inputFocused ? `0 0 0 3px ${c.accentDim}` : 'none',
   }
 
   const btnStyle: React.CSSProperties = {
-    background: '#1f1f26', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 7,
-    color: '#e8e8ec', ...SANS, fontSize: 12,
-    padding: '7px 16px', cursor: 'pointer',
-  }
-
-  const kbdStyle: React.CSSProperties = {
-    display: 'inline-block', background: '#1f1f26', border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 4, ...MONO, fontSize: 10, color: '#888896', padding: '2px 6px',
-  }
-
-  const sectionTitleStyle: React.CSSProperties = {
-    fontSize: 11, color: '#50505f', letterSpacing: '0.1em',
-    textTransform: 'uppercase', fontWeight: 500, marginBottom: 12,
-    paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.07)',
-    ...SANS,
+    background: c.surface,
+    border: `1px solid ${c.border}`,
+    borderRadius: r.sm,
+    color: c.text,
+    ...SANS, fontSize: 12, fontWeight: 500,
+    padding: '7px 14px',
+    cursor: 'pointer',
+    transition: 'all 120ms',
   }
 
   return (
-    <div className="overflow-y-auto flex-1" style={{ padding: '28px 32px' }}>
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionTitleStyle}>Connection</div>
-        <SettingsRow label="Server URL" desc="The backend query endpoint"
-          control={<input style={inputStyle} value={url} onChange={(e) => setUrl(e.currentTarget.value)}/>}
-        />
-        <SettingsRow label="Status" desc="Current connection state"
-          control={
-            <div className="flex items-center gap-1.5" style={{ fontSize: 12, ...MONO, color: '#4ade80' }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80' }} />
-              connected
-            </div>
-          }
-        />
-        <SettingsRow label="Reconnect" desc="Test and re-establish the connection"
-          control={<button style={btnStyle}>Test connection</button>}
-        />
+    <div className="overflow-y-auto flex-1" style={{ background: c.bg }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 40px 64px' }}>
+
+        {/* Header */}
+        <header style={{ marginBottom: 40 }}>
+          <h1 style={{
+            ...SANS, fontSize: 26, fontWeight: 300, color: c.text,
+            letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2,
+          }}>
+            Settings
+          </h1>
+          <p style={{
+            ...SANS, fontSize: 13, color: c.textDim,
+            margin: '8px 0 0', lineHeight: 1.5,
+          }}>
+            Configure your connection and editor preferences.
+          </p>
+        </header>
+
+        {/* Connection */}
+        <Section
+          title="Connection"
+          description="The endpoint your queries are sent to."
+        >
+          <SettingsRow
+            label="Server URL"
+            desc="The backend query endpoint. Queries are POSTed here as JSON."
+            control={
+              <input
+                style={inputStyle}
+                value={url}
+                onChange={e => setUrl(e.currentTarget.value)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                spellCheck={false}
+              />
+            }
+          />
+          <SettingsRow
+            label="Status"
+            desc="Current connection state."
+            control={
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '5px 10px', borderRadius: 4,
+                background: c.okDim, border: `1px solid rgba(106,212,143,0.2)`,
+              }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: c.ok, boxShadow: `0 0 6px rgba(106,212,143,0.5)`,
+                }} />
+                <span style={{ ...MONO, fontSize: 11, color: c.ok }}>connected</span>
+              </div>
+            }
+          />
+          <SettingsRow
+            last
+            label="Reconnect"
+            desc="Test the URL above and re-establish the connection."
+            control={
+              <button
+                style={btnStyle}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = c.accentSoft
+                  e.currentTarget.style.color = c.accent
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = c.border
+                  e.currentTarget.style.color = c.text
+                }}
+              >
+                Test connection
+              </button>
+            }
+          />
+        </Section>
       </div>
     </div>
   )
