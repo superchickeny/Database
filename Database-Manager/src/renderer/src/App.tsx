@@ -5,8 +5,6 @@ import "../src/assets/main.css"
 import QueryPage from './components/QueryPage'
 import SettingsPage from './components/SettingsPage'
 
-type Tab = 'home' | 'query' | 'settings'
-
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" }
 const SANS: React.CSSProperties = { fontFamily: "'DM Sans', sans-serif" }
 
@@ -30,15 +28,23 @@ const SettingsIcon = () => (
 )
 
 export default function App(): React.JSX.Element {
-  const [tab, setTab] = useState<Tab>('home')
+  const [tab, setTab] = useState<string>('home')
   const [pendingQuery, setPendingQuery] = useState('')
+  const [url, setUrl] = useState('http://localhost:4000/query');
+  const [queries, setQueries] = useState<Query[]>([]);
+
 
   const handleRunQuery = (q: string) => {
     setPendingQuery(q)
     setTab('query')
   }
 
-  const tabs: { id: Tab; label: string; Icon: React.FC }[] = [
+  const OnQuerySent = (query: string, timeInMs: number, rowsReturned: number) => {
+    const q: Query = {query: query, timeInMs: timeInMs, rowCount: rowsReturned, slow: timeInMs >= 100}; 
+    setQueries((prev) => [q, ...prev]);
+  }
+
+  const tabs: { id: string; label: string; Icon: React.FC }[] = [
     { id: 'home', label: 'Home', Icon: HomeIcon },
     { id: 'query', label: 'Query', Icon: QueryIcon },
     { id: 'settings', label: 'Settings', Icon: SettingsIcon },
@@ -80,9 +86,9 @@ export default function App(): React.JSX.Element {
 
         {/* Pages */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {tab === 'home' && <HomePage onRunQuery={handleRunQuery} />}
-          {tab === 'query' && <QueryPage initialQuery={pendingQuery} onQueryRan={() => {}} />}
-          {tab === 'settings' && <SettingsPage />}
+          {tab === 'home' && <HomePage onRunQuery={handleRunQuery} queries={queries} setQueries={setQueries} />}
+          {tab === 'query' && <QueryPage url={url} initialQuery={pendingQuery} onQueryRan={OnQuerySent} />}
+          {tab === 'settings' && <SettingsPage url={url} setUrl={setUrl}/>}
         </div>
       </div>
     </>
