@@ -14,6 +14,7 @@ struct queryParse {
 		UPDATE,
 		DELETE,
 		CREATE,
+		DROP,
 		UNKNOWN
 	};
 
